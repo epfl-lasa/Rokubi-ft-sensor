@@ -3,15 +3,15 @@ import numpy.matlib
 import matplotlib.pyplot as plt
 from scipy.signal import savgol_filter, windows, convolve
 
-data = np.loadtxt("data.txt")
+data = np.loadtxt("data.txt", delimiter=" ")
 time = data[:, 0]
 wrench = data[:, 1:]
 dT = 1.0/800
 sensorTime = np.linspace(0, len(data)*dT, len(data))
 
-win = np.matlib.repmat(windows.hann(1), 1, 6).reshape(1, 6)
-wrench2 = savgol_filter(wrench, 31, 3, axis = 0)
-filtered = convolve(wrench, win, mode='same') / sum(win)
+# win = np.matlib.repmat(windows.hann(1), 1, 6).reshape(1, 6)
+# wrench2 = savgol_filter(wrench, 31, 3, axis = 0)
+# filtered = convolve(wrench, win, mode='same') / sum(win)
 
 # plt.plot(time, wrench, "-+")
 plt.legend(["Force X", "Force Y", "Force Z", "Torque X", "Torque Y", "Torque Z"])
