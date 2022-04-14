@@ -1,0 +1,8 @@
+<!-- Launch file to activate real-time simulator and connect to it the template_gnc algorithms-->
+<launch>
+  <node name="ft_publisher" pkg="rokubi_ft_driver" type="ft_publisher" output ="screen"/>
+  <!-- <node pkg="rosbag" type="record" name="recorder" args="record -a -O $(find real_time_simulator)/log/log.bag"/> -->
+
+</launch>
+
+
