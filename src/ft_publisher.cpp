@@ -17,6 +17,7 @@ int main(int argc, char **argv) {
     ros::Publisher wrench_pub = nh.advertise<geometry_msgs::WrenchStamped>("wrench_data", 1000);
     ros::Rate loop_rate(250);
 
+    // Getting calibration data
     std::vector<double> forceBias_data = {0, 0, 0};
     nh.getParam("/forceBias", forceBias_data);
     Eigen::Map<Eigen::Matrix<double, 3, 1>> forceBias(forceBias_data.data(), 3, 3);
@@ -26,6 +27,16 @@ int main(int argc, char **argv) {
     nh.getParam("/forceTransform", forceTransform_data);
     Eigen::Map<Eigen::Matrix<double, 3, 3>> forceTransform(forceTransform_data.data(), 3, 3);
     std::cout << forceTransform << std::endl;
+
+    std::vector<double> torqueBias_data = {0, 0, 0};
+    nh.getParam("/torqueBias", torqueBias_data);
+    Eigen::Map<Eigen::Matrix<double, 3, 1>> torqueBias(torqueBias_data.data(), 3, 3);
+    std::cout << torqueBias << std::endl;
+
+    std::vector<double> torqueTransform_data;
+    nh.getParam("/torqueTransform", torqueTransform_data);
+    Eigen::Map<Eigen::Matrix<double, 3, 3>> torqueTransform(torqueTransform_data.data(), 3, 3);
+    std::cout << torqueTransform << std::endl;
 
     double calibWeight;
     nh.getParam("/calibrationWeight", calibWeight);
@@ -66,26 +77,34 @@ int main(int argc, char **argv) {
         size_t headerPosition = message.rfind("\377\372\372\377");
         headerPosition = message.substr(0, headerPosition).rfind("\377\372\372\377");
 
-        std::cout << headerPosition << " " << message.length() << std::endl;
+        // std::cout << headerPosition << " " << message.length() << std::endl;
         
         serialLine.flush(); 
 
         if (headerPosition < message.length() - bufferLength){
             std::string sensorMsg = message.substr(headerPosition, 26);
 
+            // Converting data into SI units
             Eigen::Matrix<double, 3, 1> newForce{   (double)(((int8_t)sensorMsg.at(4))*255 + (uint8_t)sensorMsg.at(5)),
                                                     (double)(((int8_t)sensorMsg.at(6))*255 + (uint8_t)sensorMsg.at(7)),
                                                     (double)(((int8_t)sensorMsg.at(8))*255 + (uint8_t)sensorMsg.at(9)) };
+            newForce = forceTransform*newForce + forceBias;
 
+            Eigen::Matrix<double, 3, 1> newTorque{  (int)(((int8_t)sensorMsg.at(10))*255 + (uint8_t)sensorMsg.at(11)),
+                                                    (int)(((int8_t)sensorMsg.at(12))*255 + (uint8_t)sensorMsg.at(13)),
+                                                    (int)(((int8_t)sensorMsg.at(14))*255 + (uint8_t)sensorMsg.at(15)) };
+            newTorque = torqueTransform*newTorque + torqueBias;
+
+            // Filling ROS message
             geometry_msgs::WrenchStamped sensorWrench;
 
             sensorWrench.wrench.force.x = newForce(0);
             sensorWrench.wrench.force.y = newForce(1);
             sensorWrench.wrench.force.z = newForce(2);
 
-            sensorWrench.wrench.torque.x = (int)(((int8_t)sensorMsg.at(10))*255 + (uint8_t)sensorMsg.at(11));
-            sensorWrench.wrench.torque.y = (int)(((int8_t)sensorMsg.at(12))*255 + (uint8_t)sensorMsg.at(13));
-            sensorWrench.wrench.torque.z = (int)(((int8_t)sensorMsg.at(14))*255 + (uint8_t)sensorMsg.at(15));
+            sensorWrench.wrench.torque.x = newTorque(0);
+            sensorWrench.wrench.torque.y = newTorque(1);
+            sensorWrench.wrench.torque.z = newTorque(2);
 
             sensorWrench.header.stamp = ros::Time::now();
 

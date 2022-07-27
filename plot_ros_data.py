@@ -27,6 +27,10 @@ for i, msg in enumerate(wrenchData):
 
 time = time - time[0]
 
+for i in range(3):
+    print(np.mean(forceData[i, :]))
+    print(np.mean(torqueData[i, :]))
+
 
 plt.subplot(2, 1, 1)
 plt.plot(time, forceData.T)

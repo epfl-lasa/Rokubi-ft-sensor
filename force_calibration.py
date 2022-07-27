@@ -192,11 +192,21 @@ z = np.outer(np.ones_like(u), np.cos(v))
 
 ellipsoid = ( (inve@np.diag(axes) @ np.stack((x, y, z), 0).reshape(3, -1)).T + center.T).T.reshape(3, *x.shape)
 
-fig = plt.figure()
+fig = plt.figure(11)
 ax = fig.add_subplot(111, projection='3d')
 ax.plot_surface(*ellipsoid, rstride=4, cstride=4, color='b', alpha=0.2)
 ax.scatter(forceData[0, :], forceData[1, :], forceData[2, :])
 ax.set_title("Fitted ellipsoid with raw data")
+ax.set_xlim(-20,20)
+ax.set_ylim(-20,20)
+ax.set_zlim(-20,20)
 
+fig = plt.figure(12)
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(torqueData[0, :], torqueData[1, :], torqueData[2, :])
+ax.set_title("Fitted ellipsoid with raw data")
+# ax.set_xlim(-20,20)
+# ax.set_ylim(-20,20)
+# ax.set_zlim(-20,20)
 
 plt.show()
